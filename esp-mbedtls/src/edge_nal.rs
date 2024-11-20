@@ -4,13 +4,14 @@ use core::net::SocketAddr;
 use embedded_io::Error;
 
 use crate::asynch::Session;
-use crate::{Certificates, Mode, TlsError, TlsReference, TlsVersion};
+use crate::{CaCertificate, Mode, OwnCertificate, TlsError, TlsReference, TlsVersion};
 
 /// An implementation of `edge-nal`'s `TcpAccept` trait over TLS.
 pub struct TlsAcceptor<'d, T> {
     acceptor: T,
     min_version: TlsVersion,
-    certificates: Certificates<'d>,
+    ca_cert: Option<&'d CaCertificate>,
+    own_cert: Option<&'d OwnCertificate>,
     tls_ref: TlsReference<'d>,
 }
 
@@ -29,13 +30,15 @@ where
     pub const fn new(
         acceptor: T,
         min_version: TlsVersion,
-        certificates: Certificates<'d>,
+        ca_cert: Option<&'d CaCertificate>,
+        own_cert: Option<&'d OwnCertificate>,
         tls_ref: TlsReference<'d>,
     ) -> Self {
         Self {
             acceptor,
             min_version,
-            certificates,
+            ca_cert,
+            own_cert,
             tls_ref,
         }
     }
@@ -62,7 +65,8 @@ where
             socket,
             Mode::Server,
             self.min_version,
-            self.certificates,
+            self.ca_cert,
+            self.own_cert,
             self.tls_ref,
         )?;
 
@@ -75,7 +79,8 @@ pub struct TlsConnector<'d, T> {
     connector: T,
     servername: &'d CStr,
     min_version: TlsVersion,
-    certificates: Certificates<'d>,
+    ca_cert: Option<&'d CaCertificate>,
+    own_cert: Option<&'d OwnCertificate>,
     tls_ref: TlsReference<'d>,
 }
 
@@ -96,14 +101,16 @@ where
         connector: T,
         servername: &'d CStr,
         min_version: TlsVersion,
-        certificates: Certificates<'d>,
+        ca_cert: Option<&'d CaCertificate>,
+        own_cert: Option<&'d OwnCertificate>,
         tls_ref: TlsReference<'d>,
     ) -> Self {
         Self {
             connector,
             servername,
             min_version,
-            certificates,
+            ca_cert,
+            own_cert,
             tls_ref,
         }
     }
@@ -131,7 +138,8 @@ where
                 servername: self.servername,
             },
             self.min_version,
-            self.certificates,
+            self.ca_cert,
+            self.own_cert,
             self.tls_ref,
         )?;
 
