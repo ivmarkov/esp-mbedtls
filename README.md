@@ -1,20 +1,36 @@
 # esp-mbedtls
 
-This is mbedtls for ESP32 / bare-metal Rust.
+This is a type-safe Rust wrapper over the [mbedtls](https://github.com/Mbed-TLS/mbedtls) C library that provides APIs for establishing 
+client and server TLS streaming connections.
 
-It comes with mbedtls precompiled to avoid the need for a complete C toolchain. See `build_mbedtls` for how it was built.
+It works on the following platforms:
+- ESP32 Bare-metal ([`esp-hal`](https://github.com/esp-rs/esp-hal))
+- ESP-IDF ([`esp-idf-svc`](https://github.com/esp-rs/esp-idf-svc))
+- Any *nix or Windows machine
+- Any other target that has a global allocator as well as a limited support for the C standard library (`str*` functions). Using [tinyrlibc](https://github.com/rust-embedded-community/tinyrlibc) is an easy option to add support for these functions
+
+Specificaly for ESP32 Bare-metal it comes with `mbedtls` precompiled to avoid the need for a complete C toolchain.
+
+ESP32 (both bare-metal and ESP-IDF) support comes with built-in hardware acceleration for the SHA* and RSA* family of algorithms. Support for SHA* is
+especially important for having TLS negotiation that does not actually time out.
+
+When hacking on the `esp-mbedtls` repo itself, make sure to initialize the `mbedtls` GIT submodule or else the build would fail. One way to do that is when cloning the repo:
+```sh
+git clone --recurse-submodules https://github.com/esp-rs/esp-mbedtls
+```
 
 ## Status
 
-This should work together with `esp-wifi`. It currently won't work without. However it's not well tested yet besides the included examples.
+See the examples (ESP Bare-metal-specific) for how to use it. 
 
-See the examples for how to use it. A key thing is to [set a bigger heap size](https://github.com/esp-rs/esp-wifi/blob/main/esp-wifi/docs/tuning.md) for esp-wifi since more heap memory is needed to get this working.
+A key thing is to assign a bigger heap size to the global allocator. One way to do this with ESP Bare-metal is as follows:
+```rust
+esp_alloc::heap_allocator!(115 * 1024);
+```
 
 In general this is heavy in terms of heap memory used and code size. If you can, you should prefer using something like `embedded-tls`.
 
 For now it's missing advanced configuration options which will be added step-by-step.
-
-Currently this won't work on ESP32-S2 - getting it to work will require tweaking the memory usage a lot!
 
 The examples use one hard-coded address of `www.google.com` which might not always work.
 
@@ -30,9 +46,8 @@ Examples are available for:
 
 - esp32
 - esp32c3
+- esp32s2
 - esp32s3
-
-Limited support is also available for `esp32s2` but it won't compile for async.
 
 To run examples, you need to specify the architecture as a feature, the example name, the target and the toolchain.
 
@@ -58,6 +73,7 @@ Here's a table of the architectures with their corresponding target for quick re
 | ------------ | --------------------------- | ------------------ |
 | esp32        | xtensa-esp32-none-elf       | esp                |
 | esp32c3      | riscv32imc-unknown-none-elf | nightly            |
+| esp32s2      | xtensa-esp32s2-none-elf     | esp                |
 | esp32s3      | xtensa-esp32s3-none-elf     | esp                |
 
 Heres's a list of all the examples with their description:
